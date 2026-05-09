@@ -10,6 +10,7 @@ var Main = function () {
   var _counter = 0;
   var _renderTime = 0;
 
+  var _lastFrame = 0; // used with _interval
   var _wakeLock = undefined;
 
   // cached
@@ -250,20 +251,22 @@ var Main = function () {
       Main.blurNav(false);
     },
 
-    nextFrame: function () {
+    nextFrame: function (timestamp) {
+      requestAnimationFrame(Main.nextFrame);
+      let elapsed = timestamp - _lastFrame;
+      if (!timestamp || elapsed < _interval) {
+        return;
+      }
+      _lastFrame = timestamp;
+
       _counter += 1;
       if (_pause > 0) {
         _pause -= 1;
       }
-      var start = performance.now();
       if (!Main.isPaused()) {
         Module._cimbare_render();
         var frameCount = Module._cimbare_next_frame(_colorBalance);
       }
-
-      var elapsed = performance.now() - start;
-      var nextInterval = _interval > elapsed ? _interval - elapsed : 0;
-      setTimeout(Main.nextFrame, nextInterval);
 
       if (_showStats && frameCount) {
         _renderTime += elapsed;
